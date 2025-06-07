@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/build/css/demo.css" rel="stylesheet" />
+  <link href="/build/css/intlTelInput.css" rel="stylesheet" />
+</head>
+
+<body class="bg-gray-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow">
+    <div class="container mx-auto px-4 py-4">
+      <a href="/" class="text-xl font-bold text-blue-600">Aquasentinel</a>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="flex-grow flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md bg-white p-8 rounded shadow">
+      <h1 class="text-2xl font-bold text-center mb-6">Create an Account</h1>
+
+      <form action="/register" method="POST" enctype="multipart/form-data">
+        {{ csrfField() }}
+        <input type="hidden" name="_method" value="POST" />
+
+        <!-- Basic Fields -->
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="firstName">First Name</label>
+          <input class="w-full border px-3 py-2 rounded" type="text" id="firstName" name="firstName" required />
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="lastName">Last Name</label>
+          <input class="w-full border px-3 py-2 rounded" type="text" id="lastName" name="lastName" required />
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="username">Username</label>
+          <input class="w-full border px-3 py-2 rounded" type="text" id="username" name="username" required />
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="email">Email</label>
+          <input class="w-full border px-3 py-2 rounded" type="email" id="email" name="email" required />
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="password">Password</label>
+          <input class="w-full border px-3 py-2 rounded" type="password" id="password" name="password" required />
+        </div>
+
+        <!-- Role Selection -->
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="role">Role</label>
+          <select class="w-full border px-3 py-2 rounded" id="role" name="role" required onchange="showProofFields()">
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="moderator">Moderator</option>
+            <option value="citizen">Citizen</option>
+          </select>
+        </div>
+
+        <!-- Admin Proof Fields -->
+        <div id="admin-proof" class="mb-4 hidden">
+          <label class="block mb-1 font-semibold" for="admin_type">Admin Type</label>
+          <select class="w-full border px-3 py-2 rounded" id="admin_type" name="admin_type"
+            onchange="showAdminProofFields()">
+            <option value="">Select Admin Type</option>
+            <option value="government">Government Admin</option>
+            <option value="other">Other Admin</option>
+          </select>
+
+          <div id="government-admin-fields" class="mt-4 hidden">
+            <label class="block mb-1" for="gov_id_card">Government ID Card (PDF or Image)</label>
+            <input type="file" id="gov_id_card" name="gov_id_card" accept=".pdf,image/*"
+              class="w-full border px-3 py-2 rounded" />
+            <label class="block mt-2 mb-1" for="gov_fingerprint">Digital Fingerprint</label>
+            <input type="file" id="gov_fingerprint" name="gov_fingerprint" accept="image/*"
+              class="w-full border px-3 py-2 rounded" />
+          </div>
+
+          {{-- <div id="other-admin-fields" class="mt-4 hidden">
+            <label class="block mb-1" for="admin_fingerprint">Digital Fingerprint</label>
+            <input type="file" id="admin_fingerprint" name="admin_fingerprint" accept="image/*"
+              class="w-full border px-3 py-2 rounded" />
+          </div> --}}
+        </div>
+
+        <!-- Moderator Proof Fields -->
+        <div id="moderator-proof" class="mb-4 hidden">
+          <label class="block mb-1" for="moderator_name">Business Name</label>
+          <input type="text" id="moderator_name" name="moderator_name" class="w-full border px-3 py-2 rounded" />
+          <label class="block mt-2 mb-1" for="moderator_rccm">RCCM Proof (PDF or Image)</label>
+          <input type="file" id="moderator_rccm" name="moderator_rccm" accept=".pdf,image/*"
+            class="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <!-- Citizen Proof Fields -->
+        <div id="citizen-proof" class="mb-4 hidden">
+          <label class="block mb-1" for="citizen_id_card">National ID Card (PDF or Image)</label>
+          <input type="file" id="citizen_id_card" name="citizen_id_card" accept=".pdf,image/*"
+            class="w-full border px-3 py-2 rounded" />
+          <p class="text-xs text-gray-500 mt-1">You must be at least 14 years old.</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="phone_number">Phone Number</label>
+          <input class="w-full border px-3 py-2 rounded" type="tel" id="phone_number" name="phone_number"
+            placeholder="e.g. 812345678" required />
+          <p class="text-xs text-gray-500 mt-1">Do not include country code here — select it with your country flag.</p>
+        </div>
+
+
+        <button class="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 mt-4" type="submit">
+          Register
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <p class="text-sm text-gray-600">
+          Already have an account?
+          <a href="/login" class="text-blue-600 hover:underline">Log in</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white text-center py-4">
+    &copy; {{ new Date().getFullYear() }} Aquasentinel. All rights reserved.
+  </footer>
+
+  <!-- JavaScript for dynamic field display -->
+  <script>
+    function showProofFields() {
+      const role = document.getElementById('role').value;
+      document.getElementById('admin-proof').classList.add('hidden');
+      document.getElementById('moderator-proof').classList.add('hidden');
+      document.getElementById('citizen-proof').classList.add('hidden');
+
+      if (role === 'admin') {
+        document.getElementById('admin-proof').classList.remove('hidden');
+        showAdminProofFields();
+      } else if (role === 'moderator') {
+        document.getElementById('moderator-proof').classList.remove('hidden');
+      } else if (role === 'citizen') {
+        document.getElementById('citizen-proof').classList.remove('hidden');
+      }
+    }
+
+    function showAdminProofFields() {
+      const adminType = document.getElementById('admin_type').value;
+      const govFields = document.getElementById('government-admin-fields');
+      const otherFields = document.getElementById('other-admin-fields');
+
+      govFields.classList.add('hidden');
+      otherFields.classList.add('hidden');
+
+      if (adminType === 'government') {
+        govFields.classList.remove('hidden');
+      } else if (adminType === 'other') {
+        otherFields.classList.remove('hidden');
+      }
+    }
+  </script>
+  <script src="/build/js/intlTelInput.js"></script>
+  <script>
+    var input = document.querySelector("#phone_number");
+    window.intlTelInput(input, {})
+  </script>
+</body>
+
+</html>
