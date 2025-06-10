@@ -7,7 +7,8 @@
   <title>Register</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-  <link rel="stylesheet" href="/build/css/intlTelInput.css" />
+  <link rel="stylesheet" href="/build1/css/demo.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="/build1/css/intlTelInput.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
@@ -104,11 +105,11 @@
             <p class="text-xs text-gray-500">You must be at least 14 years old.</p>
           </div>
 
-          <div>
+          <div class="relative">
             <label class="block font-semibold mb-1" for="phone_number">Phone Number</label>
             <input class="w-full border px-3 py-2 rounded" type="tel" id="phone_number" name="phone_number"
-              placeholder="e.g. 812345678" required />
-            <p class="text-xs text-gray-500">Do not include country code — select it with your country flag.</p>
+              placeholder="e.g. +243 812345678" required />
+            <p class="text-xs text-gray-500">Write your country code and your phone nume.</p>
           </div>
 
           <div>
@@ -269,10 +270,19 @@
     }
   </script>
 
-  <script src="/build/js/intlTelInput.js"></script>
+  <script src="/build1/js/intlTelInput.js"></script>
   <script>
-    const input = document.querySelector("#phone_number")
-    window.intlTelInput(input, {})
+   const input = document.querySelector("#phone_number");
+window.intlTelInput(input, {
+  initialCountry: "auto",
+  geoIpLookup: function (callback) {
+    fetch('https://ipapi.co/json')
+      .then(res => res.json())
+      .then(data => callback(data.country_code))
+      .catch(() => callback('us'));
+  },
+  utilsScript: "/build1/js/utils.js", // Needed for formatting/validation
+});
   </script>
 </body>
 
