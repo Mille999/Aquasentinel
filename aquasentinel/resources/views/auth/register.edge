@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
   <link rel="stylesheet" href="/build1/css/demo.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/build1/css/intlTelInput.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/phone1/css/intlTelInput.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
@@ -281,7 +281,7 @@ window.intlTelInput(input, {
       .then(data => callback(data.country_code))
       .catch(() => callback('us'));
   },
-  utilsScript: "/build1/js/utils.js", // Needed for formatting/validation
+  utilsScript: "/phone1/js/utils.js", // Needed for formatting/validation
 });
   </script>
 </body>
