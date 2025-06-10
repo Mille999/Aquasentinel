@@ -5,10 +5,35 @@ import { schema } from '@adonisjs/validator'
 
 
 export default class AlertController {
-  async index({ response }: HttpContext) {
-    const alerts = await Alert.query().preload('forecast')
-    return response.ok(alerts)
+ async index({ view }: HttpContext) {
+  let alerts = await Alert.query().preload('forecast')
+
+  if (alerts.length === 0) {
+     alerts = [
+      {
+        message: 'Flash flood warning for river-adjacent regions.',
+        region: 'River Valley',
+        alertType: 'banner',
+        forecast: { title: 'Heavy Rain Expected' }
+      },
+      {
+        message: 'Drought conditions expected over the next week.',
+        region: 'Lake Shore',
+        alertType: 'push',
+        forecast: { title: 'Prolonged Dry Spell' }
+      },
+      {
+        message: 'Elevated sea levels and strong winds predicted.',
+        region: 'Coastal Plains',
+        alertType: 'sms',
+        forecast: { title: 'Storm Surge Risk' }
+      }
+    ] as any[] // This disables TS type-checking for mock alerts
   }
+
+  return view.render('pages/alerts', { alerts })
+}
+
 
   async store({ request, response }: HttpContext) {
     const alertSchema = schema.create({
@@ -28,14 +53,29 @@ export default class AlertController {
     const alert = await Alert.create(payload)
     return response.created(alert)
   }
+  async byLocation({ request, response }: HttpContext) {
+    const latitude = request.input('lat')
+    const longitude = request.input('lon')
+    if (!latitude || !longitude) {
+      return response.badRequest({ message: 'Latitude and longitude are required.' })
+    }
+    const alerts = await Alert.query()
+      .where('latitude', latitude)
+      .where('longitude', longitude)
+      .preload('forecast')
+    if (alerts.length === 0) {
+      return response.notFound({ message: 'No alerts found for this location.' })
+    }
+    return response.ok(alerts)
+  }
 
-  async show({ params, response }: HttpContext) {
+  async show({ params, view }: HttpContext) {
     const alert = await Alert.query()
       .where('id', params.id)
       .preload('forecast')
       .firstOrFail()
 
-    return response.ok(alert)
+    return view.render('pages/alerts', { alert })
   }
 
   async destroy({ params, response }: HttpContext) {
