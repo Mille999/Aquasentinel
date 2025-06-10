@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, beforeSave, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-
+// import { beforeSave } from '@adonisjs/lucid/orm'  
 import Report from '#models/report'
 import EducationalContent from '#models/educational_content'
 import Investment from '#models/investment'
@@ -25,13 +25,22 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare lastName: string | null
 
   @column()
-  declare role: string|'citizen'| 'admin'| 'moderator'
+  declare role: string | 'citizen' | 'admin' | 'moderator'
 
   @column()
   declare username: string
 
   @column()
   declare email: string
+
+  @column()
+  declare phoneNumber: string
+
+  @column()
+  declare country: string
+
+  @column()
+  declare region: string
 
   @column({ serializeAs: null })
   declare password: string
@@ -52,15 +61,15 @@ export default class User extends compose(BaseModel, AuthFinder) {
     foreignKey: 'userId',
     localKey: 'id',
   })
-  declare educationalContents: HasMany<typeof EducationalContent> 
+  declare educationalContents: HasMany<typeof EducationalContent>
 
-  @beforeSave ()
-  static async beforeSave (user: User) {
-    if (user.$dirty.password) {
-      user.password = await hash.make(user.password)
-    }
-  }
-  
-@hasMany(() => Investment, { foreignKey: 'userId' }) // si un user crée des investissements
-  declare investments: HasMany<typeof Investment> 
+  // @beforeSave ()
+  // static async beforeSave (user: User) {
+  //   if (user.$dirty.password) {
+  //     user.password = await hash.make(user.password)
+  //   }
+  // }
+
+  @hasMany(() => Investment, { foreignKey: 'userId' }) // si un user crée des investissements
+  declare investments: HasMany<typeof Investment>
 }
