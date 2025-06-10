@@ -1,102 +1,154 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
-import { schema, rules } from '@adonisjs/validator'
-import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import hash from '@adonisjs/core/services/hash'
+import Alert from '#models/alert'
+import Forecast from '#models/forecast'
+import { countries } from 'countries-list'
+
 
 export default class AuthController {
-  // Affiche le formulaire de connexion
-  async showLoginForm({ view }: HttpContext) {
+  // Page de login
+  public async showLoginForm({ view }: HttpContext) {
     return view.render('auth/login')
   }
 
-  // Connexion utilisateur
-  async login({ request, auth, response, session }: HttpContext) {
-    const loginSchema = schema.create({
-      email: schema.string([rules.email()]),
-      password: schema.string([rules.minLength(6)]),
-    })
+  // Page d'inscription
+  public async showRegisterForm({ view }: HttpContext) {
+    const countryList = Object.entries(countries).map(([code, country]) => ({
+      code,
+      name: country.name,
+      regions: (country as any).regions ? Object.entries((country as any).regions).map(([regionCode, regionName]) => ({
+        code: regionCode,
+        name: regionName,
+      })) : [],
+    }))
+    
+    return view.render('auth/register', { countryList })
+  }
 
-    const { email, password } = await request.validate({ schema: loginSchema })
+  // Connexion simplifiée
+  public async login({ request, response, auth, session }: HttpContext) {
+    const email = request.input('email')
+    const password = request.input('password')
+
+    if (!email || !password) {
+      session.flash('error', 'Please, provide an email or password.')
+      return response.redirect('/login')
+    }
 
     try {
-      const user = await User.query().where('email', email).first()
-      if (!user || !(await user.verifyPassword(password))) {
-        session.flash('error', 'Email ou mot de passe incorrect')
-        return response.redirect('/auth/login')
+      const user = await User.findBy('email', email)
+
+      if (!user) {
+        session.flash('error', 'User not found.')
+        return response.redirect('/login')
+      }
+
+      const isPasswordValid = await hash.verify(user.password, password)
+
+      if (!isPasswordValid) {
+        session.flash('error', 'Incorrect password.')
+        return response.redirect('/login')
       }
 
       await auth.use('web').login(user)
-      return response.redirect('/dashboard')
+      session.flash('success', 'You are now connected.')
+
+      if (user.role === 'admin' || user.role === 'moderator') {
+        return response.redirect('/dashboards/admin')
+      } else {
+        return response.redirect('/dashboards/public')
+      }
     } catch (error) {
-      session.flash('error', 'Erreur lors de la connexion')
-      return response.redirect('/auth/login')
+      console.error('Login error:', error)
+      session.flash('error', 'An error occurred during login, please try again later.')
+      return response.redirect('/login')
     }
   }
 
-  // Déconnexion utilisateur
-  async logout({ auth, response }: HttpContext) {
+  // Inscription simplifiée
+  public async register({ request, response, auth, session }: HttpContext) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const username = request.input('username')
+    const email = request.input('email')
+    const password = request.input('password')
+    const country = request.input('country')
+    const region = request.input('region')
+    const role = request.input('role') || 'user' // Default to 'user' if not provided
+    const isAdmin = role === 'admin' || role === 'moderator'
+    const isModerator = role === 'moderator'
+    const isUser = role === 'Citizen'
+
+    // Validate inputs
+    if (!country || !region) {
+      session.flash('error', 'Country and region are required.')
+      return response.redirect('/register')
+    }
+
+    if (!isAdmin && !isModerator && !isUser) {
+      session.flash('error', 'Invalid role selected.')
+
+      // Validate username, email, and password
+
+      if (!username || !email || !password) {
+        session.flash('error', 'Every field is required.')
+        return response.redirect('/register')
+      }
+      if (!emailRegex.test(email)) {
+        session.flash('error', 'Invalid email format.')
+        return response.redirect('/register')
+      }
+      if (password.length < 6) {
+        session.flash('error', 'Password must be at least 6 characters long.')
+        return response.redirect('/register')
+      }
+
+      const existing = await User.query()
+        .where('email', email)
+        .orWhere('username', username)
+        .first()
+
+      if (existing) {
+        session.flash('error', 'Email or username already exists.')
+        return response.redirect('/register')
+      }
+
+      try {
+        const user = await User.create({ username, email, password,country, region, role })
+        await auth.use('web').login(user)
+        session.flash('success', 'Account created successfully, you are now connected.')
+        return response.redirect('/dashboards/admin')
+      } catch (error) {
+        console.error('Erreur inscription :', error)
+        session.flash('error', 'An error occurred during registration, please try again later.')
+        return response.redirect('/dashboards/public')
+      }
+    }
+
+  }
+
+  // Déconnexion
+  public async logout({ auth, response }: HttpContext) {
     await auth.use('web').logout()
-    return response.redirect('auth/login')
+    return response.redirect('/login')
   }
 
-  // Affiche le formulaire d'enregistrement
-  async showRegisterForm({ view }: HttpContext) {
-    return view.render('auth/register')
+  // Show public dashboard
+  public async showPublicDashboard({ view }: HttpContext) {
+    const recentalerts = await Alert.query().select('id', 'message', 'region', 'alertType', 'created_at').orderBy('created_at', 'desc').limit(5).preload('forecast')
+    const forecasts = await Forecast.query().orderBy('created_at', 'desc').limit(5)
+    return view.render('dashboards/public', { recentalerts, forecasts })
   }
 
-  // Enregistrement d'un utilisateur
-  async register({ request, auth, response, session }: HttpContext) {
-    const registerSchema = schema.create({
-      username: schema.string([rules.minLength(3)]),
-      email: schema.string([rules.email()]),
-      password: schema.string([rules.minLength(6)]),
-      firstName: schema.string(),
-      lastName: schema.string(),
-      country_code: schema.string(), // e.g. +243
-      phone_number: schema.string(), // 👈 required
-      role: schema.enum.optional(['citizen', 'admin', 'moderator']),
-    })
-
-    const data = await request.validate({ schema: registerSchema })
-    const { country_code, phone_number } = data
-    const fullPhone = `${country_code}${phone_number}`
-
-    // 🔐 Check for unique email, username, or phone number
-    const existing = await User.query()
-      .where('email', data.email)
-      .orWhere('username', data.username)
-      .orWhere('phone_number', data.phone_number)
-      .first()
-
-    if (existing) {
-      return response.badRequest({ error: 'Email, username, or phone number already in use.' })
-    }
-
-    // 📞 Validate and format phone number
-    const parsed = parsePhoneNumberFromString(fullPhone)
-    if (!parsed?.isValid()) {
-      return response.badRequest({ error: 'Invalid phone number format.' })
-    }
-
-    // Format the phone number to E.164 (international format)
-    data.phone_number = parsed.format('E.164')
-
-    // (Optional) Log the country and calling code
-    const country = parsed.country
-    const callingCode = parsed.countryCallingCode
-    console.log('📞 Detected country:', country, '| Calling code: +' + callingCode)
-
-    // ✅ Create the user and log them in
-    const user = await User.create(data)
-    await auth.use('web').login(user)
-    session.flash('success', 'Registration successful! Welcome.')
-    return response.redirect('/')
-  }
-
-  // Redirige vers la bonne homepage selon le rôle
-  async showDashboard({ auth, view }: HttpContext) {
+  // Dashboard
+  public async showDashboard({ auth, view }: HttpContext) {
     await auth.check()
     const user = auth.user!
-    return view.render('dashboards/dashboard', { user })
+    return view.render('dashboards/admin', { user })
   }
+
+
 }
+
+
+// Note: This code is a simplified version of the original controller, focusing on login and registration.
