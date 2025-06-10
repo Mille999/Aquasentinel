@@ -6,6 +6,7 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 export default class Alert extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
+// Alert model for weather alerts related to forecasts
 
   @column()
   declare forecastId: number
