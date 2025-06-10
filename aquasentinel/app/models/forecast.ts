@@ -10,6 +10,10 @@ import type { HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
 export default class Forecast extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
+
+   @column()
+  declare title: string
+
   @column()
   declare riskType: string
 
@@ -22,13 +26,38 @@ export default class Forecast extends BaseModel {
   @column()
   declare basedOnSensor: number
 
+  @column()
+  declare region: string
+
+  @column()
+  declare waterLevel: number | null
+
+  @column()
+  declare rainfall: number | null
+
+  @column()
+  declare soilMoisture: number | null
+
+  @column()
+  declare temperature: number | null
+
+  @column()
+  declare latitude: number | null
+
+  @column()
+  declare longitude: number | null
+
+  @column.dateTime()
+  declare forecastDate: DateTime | null
+
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-   @belongsTo(() => SensorData, {
+  @belongsTo(() => SensorData, {
     foreignKey: 'basedOnSensor',
   })
   declare sensorData: BelongsTo<typeof SensorData>
