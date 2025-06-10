@@ -23,15 +23,23 @@ import SensorDataController from '#controllers/sensordata_controller'
 |--------------------------------------------------------------------------
 */
 
-// Page d’accueil
 
-router.get('/', async ({ response }) => {
-  return response.redirect('/dashboard')
+router.get('/', async ({ view }) => {
+  return view.render('pages/landing') // Crée le fichier views/pages/landing.edge
 })
 
+// Get alerts by location (query params: ?lat=xx&lon=yy)
+router.get('/alerts/location', 'AlertController.byLocation')
+
+
+
+
+
+// Tableau de bord public
+
+router.get('/publicDashboard', [AuthController, 'showPublicDashboard'])
 router.get('/dashboard', [AuthController, 'showDashboard']).use(middleware.auth())
 
- 
 
 // Authentification
 router.group(() => {
@@ -39,6 +47,7 @@ router.group(() => {
   router.post('/login', [AuthController, 'login'])
   router.get('/register', [AuthController, 'showRegisterForm'])
   router.post('/register', [AuthController, 'register'])
+
 }).use(middleware.guest())
 
 /*
@@ -48,7 +57,7 @@ router.group(() => {
 */
 router.group(() => {
   // Déconnexion
-  router.post('/auth/logout', [AuthController, 'logout'])
+  router.post('/auth/logout', [AuthController, 'logout']).use(middleware.auth())
 
   // Profil utilisateur
   router.get('/auth/profile', [UsersController, 'show'])
@@ -64,11 +73,18 @@ router.group(() => {
   router.get('/forecasts/:id', [ForecastController, 'show'])
   router.post('/forecasts', [ForecastController, 'store'])
 
-  router.get('/educational_contents', [EducationalContentController, 'index'])
-  router.get('/educational_contents/:id', [EducationalContentController, 'show'])
-  router.post('/educational_contents', [EducationalContentController, 'store'])
+  // Contenus éducatifs
 
-}).use(middleware.auth())
+  router.get('/educational_contents', [EducationalContentController, 'index'])
+  router.get('/educational_contents/category/:category', [EducationalContentController, 'byCategory'])
+  router.get('/educational_contents/detail/:id', [EducationalContentController, 'showDetail'])
+  router.get('/educational_contents/api/:id', [EducationalContentController, 'show']) // <-- keep this last
+  router.post('/educational_contents', [EducationalContentController, 'store'])
+  router.get('/contribute_content', [EducationalContentController, 'create'])
+  router.post('/contribute_content', [EducationalContentController, 'store'])
+
+
+})
 
 /*
 |--------------------------------------------------------------------------
