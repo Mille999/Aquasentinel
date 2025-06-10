@@ -17,7 +17,11 @@ export default class AIAlertService {
       })
       return response.data
     } catch (error) {
-      console.error('Open-Meteo API error:', error.message)
+      if (error instanceof Error) {
+        console.error('Open-Meteo API error:', error.message)
+      } else {
+        console.error('Open-Meteo API error:', error)
+      }
       return null
     }
   }
