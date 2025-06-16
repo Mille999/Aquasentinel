@@ -5,42 +5,53 @@ import { schema } from '@adonisjs/validator'
 
 
 export default class AlertController {
- async index({ view }: HttpContext) {
-  let alerts = await Alert.query().preload('forecast')
+async index({ view }: HttpContext) {
+    let alerts = await Alert.query().preload('forecast');
 
-  if (alerts.length === 0) {
-     alerts = [
-      {
-        message: 'Flash flood warning for river-adjacent regions.',
-        region: 'River Valley',
-        alertType: 'banner',
-        forecast: { title: 'Heavy Rain Expected' }
-      },
-      {
-        message: 'Drought conditions expected over the next week.',
-        region: 'Lake Shore',
-        alertType: 'push',
-        forecast: { title: 'Prolonged Dry Spell' }
-      },
-      {
-        message: 'Elevated sea levels and strong winds predicted.',
-        region: 'Coastal Plains',
-        alertType: 'sms',
-        forecast: { title: 'Storm Surge Risk' }
-      }
-    ] as any[] // This disables TS type-checking for mock alerts
-  }
+    if (alerts.length === 0) {
+        alerts = [
+            {
+                message: 'Severe storm approaching coastal regions.',
+                region: 'Coastal Zone',
+                alertType: 'weather',
+                forecast: { title: 'Heavy Rain & Winds Expected' },
+            },
+            {
+                message: 'Air pollution levels rising beyond safe limits.',
+                region: 'Urban Center',
+                alertType: 'environmental',
+                forecast: { title: 'Air Quality Monitoring' },
+            },
+            {
+                message: 'Landslide risk due to recent heavy rainfall.',
+                region: 'Mountain Range',
+                alertType: 'weather',
+                forecast: { title: 'Potential Landslide Warning' },
+            },
+            {
+                message: 'Infrastructure damage warning due to extreme weather conditions.',
+                region: 'Residential Area',
+                alertType: 'other',
+                forecast: { title: 'Structural Stability Report' },
+            },
+            {
+                message: 'Water contamination detected, avoid drinking from local supply.',
+                region: 'Village District',
+                alertType: 'environmental',
+                forecast: { title: 'Water Quality Alert' },
+            },
+        ] as any[];
+    }
 
-  return view.render('pages/alerts', { alerts })
+    return view.render('pages/alerts', { alerts });
 }
-
 
   async store({ request, response }: HttpContext) {
     const alertSchema = schema.create({
       forecastId: schema.number(),
       message: schema.string(),
       region: schema.string(),
-      alertType: schema.enum(['sms', 'push', 'banner'] as const),
+      alertType: schema.enum(['weather' , 'environmental' , 'other'] as const),
     })
 
     const payload = await request.validate({ schema: alertSchema })
