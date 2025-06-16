@@ -3,12 +3,53 @@ import Forecast from '#models/forecast'
 import { schema } from '@adonisjs/validator'
 //import SensorData from '#models/sensor_datum'
 import AIAlertService from '#services/ai_alert_service'
+import { DateTime } from 'luxon'
 
 export default class ForecastController {
-  async index({ response }: HttpContext) {
-    const forecasts = await Forecast.query().preload('sensorData')
-    return response.ok(forecasts)
-  }
+  async index({ view }: HttpContext) {
+    let forecasts = await Forecast.query().preload('sensorData');
+
+    if (forecasts.length === 0) {
+        forecasts = [
+            {
+                region: 'Kinshasa',
+                forecastDate: DateTime.local(),
+                waterLevel: 3.2,
+                rainfall: 75,
+                soilMoisture: 80,
+                temperature: 26,
+                riskType: 'Flood',
+                riskLevel: 'High',
+                message: 'Heavy rainfall expected, risk of flooding in low-lying areas.',
+            },
+            {
+                region: 'Lubumbashi',
+                forecastDate: DateTime.local(),
+                waterLevel: 1.5,
+                rainfall: 20,
+                soilMoisture: 60,
+                temperature: 30,
+                riskType: 'Heatwave',
+                riskLevel: 'Medium',
+                message: 'Higher temperatures expected, risk of dehydration and heat stroke.',
+            },
+            {
+                region: 'Goma',
+                forecastDate: DateTime.local(),
+                waterLevel: 2.0,
+                rainfall: 50,
+                soilMoisture: 70,
+                temperature: 24,
+                riskType: 'Landslide',
+                riskLevel: 'High',
+                message: 'Significant rainfall expected in mountainous areas, landslide risk.',
+            },
+        ] as any[];
+    }
+
+    return view.render('pages/forecast', { forecasts });
+}
+
 
   async store({ request, response }: HttpContext) {
     const forecastSchema = schema.create({
