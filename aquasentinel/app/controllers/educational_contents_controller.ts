@@ -80,15 +80,46 @@ export default class EducationalContentController {
   /**
    * Displays educational content by category.
    */
-  async byCategory({ params, view }: HttpContext) {
-    const category = params.category
-    const contents = await EducationalContent.query()
-      .whereRaw('LOWER(category) = ?', [category.toLowerCase()])
-      .preload('user')
-      .preload('forecast')
+  // async byCategory({ params, view }: HttpContext) {
+  //   const category = params.category
+  //   const contents = await EducationalContent.query()
+  //     .whereRaw('LOWER(category) = ?', [category.toLowerCase()])
+  //     .preload('user')
+  //     .preload('forecast')
 
-    return view.render('educational_contents/category', { contents, category })
+  //   return view.render('educational_contents/category', { contents, category })
+  // }
+
+  async byCategory({ params, view, request, response }: HttpContext) {
+    const category = params.category;
+    if (!category) {
+      return response.badRequest({ message: 'Category is required.' });
+    }
+
+    const searchQuery = request.input('q', '');
+    let contents = await EducationalContent.query().where('category', category).preload('user').preload('forecast');
+
+    // Static tips for categories when no content is found
+    // const staticTips: Record<string, any[]> = {
+    //   flood: [
+    //     { id: 'static-flood-1', title: 'Flood Safety Tips', content: 'Avoid walking through floodwaters...', user: { username: 'Admin' }, forecast: { title: 'Heavy Rain Expected' } },
+    //     { id: 'static-flood-2', title: 'Prepare an Emergency Kit', content: 'Have enough food, water...', user: { username: 'Community Safety' }, forecast: { title: 'Extreme Weather Alert' } }
+    //   ],
+    //   drought: [
+    //     { id: 'static-drought-1', title: 'Water Conservation Techniques', content: 'Use rainwater harvesting...', user: { username: 'Eco Advisor' }, forecast: { title: 'Prolonged Dry Spell' } },
+    //     { id: 'static-drought-2', title: 'Stay Hydrated During Heatwaves', content: 'Drink at least 2 liters...', user: { username: 'Health Expert' }, forecast: { title: 'Heatwave Risk' } }
+    //   ]
+    // };
+
+
+    // // Inject static tips if none exist in the database
+    // if (contents.length === 0 && staticTips[category]) {
+    //   contents = staticTips[category];
+    // }
+
+    return view.render('educational_contents/category', { contents, category, q: searchQuery });
   }
+
 
   /**
    * Displays detailed educational content.
@@ -96,8 +127,8 @@ export default class EducationalContentController {
   async showDetail({ params, view }: HttpContext) {
     const tip = await EducationalContent.findOrFail(params.id)
     await tip.load('user')
-    await tip.load('forecast')
-
+    await tip.load('forecast')  
+    
     return view.render('educational_contents/detail', { tip })
   }
 
