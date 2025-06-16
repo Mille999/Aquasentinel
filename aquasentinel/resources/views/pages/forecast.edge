@@ -1,0 +1,44 @@
+@component('layouts/main')
+
+@slot('title')
+<span class="text-blue-700 font-bold text-2xl"> 🌦️ Forecasts</span>
+@endslot
+
+<div class="max-w-5xl mx-auto py-8 px-4">
+  <h1 class="text-3xl font-semibold mb-6">Weather Forecasts</h1>
+
+  <ul class="grid md:grid-cols-2 gap-6">
+    @each(forecast in forecasts)
+    <li class="border-l-4 p-4 rounded-xl shadow bg-white 
+                {{ forecast.riskLevel === 'High' ? 'border-red-500' 
+                : forecast.riskLevel === 'Medium' ? 'border-yellow-500' 
+                : 'border-green-500' }}">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-xl font-semibold">
+            {{ forecast.region ? forecast.region : '📍 Unknown Location' }}
+          </h2>
+          <p class="text-sm text-gray-500 mt-2">
+            📅 {{ forecast.forecastDate.toISODate() }}
+          </p>
+          <p class="mt-1 text-gray-700">
+            🌡️ Temp: {{ forecast.temperature ? forecast.temperature + '°C' : 'N/A' }} <br>
+            💧 Rainfall: {{ forecast.rainfall ? forecast.rainfall + 'mm' : 'N/A' }} <br>
+            🌱 Soil Moisture: {{ forecast.soilMoisture ? forecast.soilMoisture + '%' : 'N/A' }} <br>
+            🚨 Risk: {{ forecast.riskType }} - {{ forecast.riskLevel }}
+          </p>
+          <p class="mt-2 text-red-600 font-semibold">⚠️ {{ forecast.message }}</p>
+        </div>
+        <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full 
+              {{ forecast.riskLevel === 'High' ? 'bg-red-100 text-red-700' 
+              : forecast.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' 
+              : 'bg-green-100 text-green-700' }}">
+          {{ forecast.riskLevel.toUpperCase() }}
+        </span>
+      </div>
+    </li>
+    @endeach
+  </ul>
+</div>
+
+@endcomponent
